@@ -13,6 +13,9 @@ this plugin makes it simple to implement all three methods of API versioning des
 1.  custom header
 1.  Accept header
 
+The accept header must contain `version=<version>`, for example:
+`curl -i http://localhost:3000/api/bar -H 'Accept: version=v2'`
+
 ## Server decorations
 
 The plugin decorates the server with a methods for adding routes.
