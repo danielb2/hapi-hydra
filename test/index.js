@@ -5,7 +5,7 @@ const Hapi = require('hapi');
 const Joi = require('joi');
 const Lab = require('lab');
 
-const HapiVersioning = require('../lib');
+const HapiVersion = require('../lib');
 
 const internals = {};
 
@@ -29,7 +29,7 @@ internals.server = function (options) {
     server.connection();
 
     server.register([{
-        register: HapiVersioning,
+        register: HapiVersion,
         options
     }, {
         register: Blipp
@@ -82,6 +82,15 @@ internals.server = function (options) {
         }
     });
 
+    server.route({
+        method: 'GET',
+        path: '/regular',
+        handler: function (request, reply) {
+
+            return reply('regular');
+        }
+    });
+
     return server;
 };
 
@@ -91,6 +100,17 @@ describe('default options', () => {
     const server  = internals.server();
 
     describe('using header', () => {
+
+        it('should not set header for regular route', (done) => {
+
+            server.inject({ url: '/regular' }, (res) => {
+
+                expect(res.statusCode).to.equal(200);
+                expect(res.result).to.equal('regular');
+                expect(res.headers.version).to.not.exist();
+                done();
+            });
+        });
 
         it('should get v1 with custom header', (done) => {
 

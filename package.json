@@ -1,5 +1,5 @@
 {
-  "name": "hapi-versioning",
+  "name": "hapi-version",
   "version": "0.0.1",
   "description": "versioning for happy, using all three methods: https://www.troyhunt.com/your-api-versioning-is-wrong-which-is/",
   "main": "lib/index.js",
