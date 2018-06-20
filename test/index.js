@@ -82,29 +82,6 @@ internals.server = function (options) {
         }
     });
 
-    it('should get root default', (done) => {
-
-        server.inject('/', (res) => {
-
-            expect(res.result).to.equal('root 1');
-            expect(res.headers.version).to.equal('v1');
-            done();
-        });
-    });
-
-    it('should get root', (done) => {
-
-        server.inject('/v1', (res) => {
-
-            expect(res.result).to.equal('root 1');
-            expect(res.headers.version).to.equal('v1');
-            done();
-        });
-    });
-
-    // var p = require('purdy');
-    // p(server.plugins.blipp.info(), { depth: 99 });
-
     return server;
 };
 
@@ -135,6 +112,18 @@ describe('default options', () => {
                 expect(res.statusCode).to.equal(200);
                 expect(res.result).to.equal('version 1');
                 expect(res.headers.version).to.equal('v1');
+                done();
+            });
+        });
+
+        it('should trump with custom header vs accept header', (done) => {
+
+            const headers = { 'Accept': 'vnd.walmart.foo;version=v1;blah=bar;', 'api-version': 'v3' };
+            server.inject({ url: '/test', headers }, (res) => {
+
+                expect(res.statusCode).to.equal(200);
+                expect(res.result).to.equal('version 3');
+                expect(res.headers.version).to.equal('v3');
                 done();
             });
         });
@@ -172,6 +161,26 @@ describe('default options', () => {
             });
         });
 
+        it('should get root default', (done) => {
+
+            server.inject('/', (res) => {
+
+                expect(res.result).to.equal('root 1');
+                expect(res.headers.version).to.equal('v1');
+                done();
+            });
+        });
+
+        it('should get root', (done) => {
+
+            server.inject('/v1', (res) => {
+
+                expect(res.result).to.equal('root 1');
+                expect(res.headers.version).to.equal('v1');
+                done();
+            });
+        });
+
         it('should get default', (done) => {
 
             server.inject('/test', (res) => {
@@ -197,18 +206,6 @@ describe('other options', () => {
         it('should get v1 with custom header', (done) => {
 
             const headers = { 'api-version': 'v1' };
-            server.inject({ url: '/api/test', headers }, (res) => {
-
-                expect(res.statusCode).to.equal(302);
-                expect(res.result).to.equal('version 1');
-                expect(res.headers.version).to.equal('v1');
-                done();
-            });
-        });
-
-        it('should not bail with accept without version', (done) => {
-
-            const headers = { 'Accept': 'vnd.walmart.foo;;blah=bar;' };
             server.inject({ url: '/api/test', headers }, (resp) => {
 
                 expect(resp.statusCode).to.equal(302);
@@ -216,10 +213,22 @@ describe('other options', () => {
                 server.inject({ url: resp.headers.location, headers }, (res) => {
 
                     expect(res.statusCode).to.equal(200);
-                    expect(res.result).to.equal('version 2');
-                    expect(res.headers.version).to.equal('v2');
+                    expect(res.result).to.equal('version 1');
+                    expect(res.headers.version).to.equal('v1');
                     done();
                 });
+            });
+        });
+
+        it('should not bail with accept without version', (done) => {
+
+            const headers = { 'Accept': 'vnd.walmart.foo;;blah=bar;' };
+            server.inject({ url: '/api/test', headers }, (res) => {
+
+                expect(res.statusCode).to.equal(200);
+                expect(res.result).to.equal('version 2');
+                expect(res.headers.version).to.equal('v2');
+                done();
             });
         });
 
