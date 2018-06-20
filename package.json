@@ -1,0 +1,20 @@
+{
+  "name": "hapi-versioning",
+  "version": "0.0.1",
+  "description": "versioning for happy, using all three methods: https://www.troyhunt.com/your-api-versioning-is-wrong-which-is/",
+  "main": "lib/index.js",
+  "scripts": {
+    "test": "lab -a code -v -I WebAssembly -t 100 -m 30000 -r console -o coverage.log -r console -o stdout -r html -o coverage.html"
+  },
+  "author": "daniel@bretoi.com",
+  "license": "ISC",
+  "dependencies": {
+    "hapi": "^16.6.3"
+  },
+  "devDependencies": {
+    "blipp": "^2.3.0",
+    "code": "^4.1.0",
+    "lab": "^14.3.4",
+    "purdy": "^3.1.1"
+  }
+}
