@@ -1,6 +1,6 @@
 {
   "name": "hapi-version",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "versioning for happy, using all three methods: https://www.troyhunt.com/your-api-versioning-is-wrong-which-is/",
   "main": "lib/index.js",
   "scripts": {
