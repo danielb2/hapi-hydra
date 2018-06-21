@@ -1,5 +1,5 @@
 {
-  "name": "hapi-version",
+  "name": "hapi-hydra-version",
   "version": "1.0.0",
   "description": "versioning for happy, using all three methods: https://www.troyhunt.com/your-api-versioning-is-wrong-which-is/",
   "main": "lib/index.js",
@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/danielb2/hapi-version.git"
+    "url": "https://github.com/danielb2/hapi-hydra-version.git"
   },
   "author": "daniel@bretoi.com",
   "license": "ISC",
