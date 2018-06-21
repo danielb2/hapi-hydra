@@ -6,6 +6,10 @@
   "scripts": {
     "test": "lab -a code -v -I WebAssembly -t 100 -m 30000 -r console -o coverage.log -r console -o stdout -r html -o coverage.html"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/danielb2/hapi-version.git"
+  },
   "author": "daniel@bretoi.com",
   "license": "ISC",
   "dependencies": {
