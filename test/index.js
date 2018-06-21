@@ -91,6 +91,16 @@ internals.server = function (options) {
         }
     });
 
+    const handler = function (request, reply) {
+
+        return reply('generic')
+    };
+
+    server.routev([
+        { method: 'GET', path: '/generic', handler: handler },
+        { version: 'v2', method: 'GET', path: '/generic', handler: handler }
+    ]);
+
     return server;
 };
 
@@ -98,6 +108,32 @@ internals.server = function (options) {
 describe('default options', () => {
 
     const server  = internals.server();
+
+
+    describe('multiple routes', () => {
+
+        it('should create multiple routes with array', (done) => {
+
+            server.inject({ url: '/v1/generic' }, (res) => {
+
+                expect(res.statusCode).to.equal(200);
+                expect(res.result).to.equal('generic');
+                expect(res.headers.version).to.equal('v1');
+                done();
+            });
+        });
+
+        it('should create multiple routes with array v2', (done) => {
+
+            server.inject({ url: '/v2/generic' }, (res) => {
+
+                expect(res.statusCode).to.equal(200);
+                expect(res.result).to.equal('generic');
+                expect(res.headers.version).to.equal('v2');
+                done();
+            });
+        });
+    });
 
     describe('using header', () => {
 

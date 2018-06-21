@@ -25,9 +25,9 @@ The plugin decorates the server with a methods for adding routes.
 The options are the same as the route configuration object with the following
 additions:
 
-- `version` - the version of the route.
+- `version` - the version of the route. [default: 'v1']
 - `isDefault` - the default version of the route. This route, without version
-  prefix, will invoke the appropriate version of the route.
+  prefix, will invoke the appropriate version of the route. [default: false]
 
 ## Options
 
