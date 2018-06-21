@@ -6,8 +6,11 @@
 * [Example](#example)
 
 
-Inspired by [Your API versioning is wrong, which is why I decided to do it 3 different wrong ways]
-this plugin makes it simple to implement all three methods of API versioning described in the article.
+
+This is a hapi plugin to manage three forms of versioning. It was inspired by
+[Your API versioning is wrong, which is why I decided to do it 3 different
+wrong ways] this plugin makes it simple to implement all three methods of API
+versioning described in the article.
 
 1.  URL versioning
 1.  custom header
@@ -15,6 +18,8 @@ this plugin makes it simple to implement all three methods of API versioning des
 
 The accept header must contain `version=<version>`, for example:
 `curl -i http://localhost:3000/api/bar -H 'Accept: version=v2'`
+
+Plugin version 1.x works for hapi 16.x
 
 ## Server decorations
 
