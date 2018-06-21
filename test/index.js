@@ -82,6 +82,16 @@ internals.server = function (options) {
         }
     });
 
+    server.routev({
+        config: { description: 'Just a versioned path but with no default' },
+        method: 'GET',
+        path: '/nodefault',
+        handler: function (request, reply) {
+
+            return reply('nodefault');
+        }
+    });
+
     server.route({
         method: 'GET',
         path: '/regular',
@@ -101,6 +111,8 @@ internals.server = function (options) {
         { version: 'v2', method: 'GET', path: '/generic', handler: handler }
     ]);
 
+    // var p = require('purdy');
+    // p(server.plugins.blipp.info(), { depth: 99 });
     return server;
 };
 
@@ -136,6 +148,30 @@ describe('default options', () => {
     });
 
     describe('using header', () => {
+
+        it('should not change route based on header when accessing normal route', (done) => {
+
+            const headers = { 'api-version': 'v1' };
+            server.inject({ url: '/regular', headers }, (res) => {
+
+                expect(res.statusCode).to.equal(200);
+                expect(res.result).to.equal('regular');
+                expect(res.headers.version).to.not.exist();
+                done();
+            });
+        });
+
+        it('should not change route based on header when accessing route with no default', (done) => {
+
+            const headers = { 'api-version': 'v1' };
+            server.inject({ url: '/v1/nodefault', headers }, (res) => {
+
+                expect(res.statusCode).to.equal(200);
+                expect(res.result).to.equal('nodefault');
+                expect(res.headers.version).to.equal('v1');
+                done();
+            });
+        });
 
         it('should not set header for regular route', (done) => {
 
@@ -258,6 +294,18 @@ describe('other options', () => {
     });
 
     describe('using header', () => {
+
+        it('should not change route based on header when accessing route with no default', (done) => {
+
+            const headers = { 'api-version': 'v1' };
+            server.inject({ url: '/api/v1/nodefault', headers }, (res) => {
+
+                expect(res.statusCode).to.equal(200);
+                expect(res.result).to.equal('nodefault');
+                expect(res.headers.version).to.equal('v1');
+                done();
+            });
+        });
 
         it('should get v1 with custom header', (done) => {
 
