@@ -1,5 +1,6 @@
 'use strict';
 const Blipp = require('blipp');
+const Boom = require('boom');
 const Code = require('code');
 const Hapi = require('hapi');
 const Joi = require('joi');
@@ -59,6 +60,15 @@ internals.server = function (options) {
         handler: function (request, reply) {
 
             return reply(this.message);
+        }
+    });
+
+    server.route({
+        method: 'GET',
+        path: '/boom',
+        handler: function (request, reply) {
+
+            return reply(Boom.unauthorized('not welcome'));
         }
     });
 
@@ -433,6 +443,18 @@ describe('other options', () => {
 
                 expect(res.result).to.equal('version 2');
                 expect(res.headers.version).to.equal('v2');
+                done();
+            });
+        });
+    });
+
+    describe('other', () => {
+
+        it('should work without response headers', (done) => {
+
+            server.inject('/boom', (res) => {
+
+                expect(res.statusCode).to.equal(401);
                 done();
             });
         });

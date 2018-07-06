@@ -17,6 +17,7 @@
   },
   "devDependencies": {
     "blipp": "^2.3.0",
+    "boom": "^7.2.0",
     "code": "^4.1.0",
     "lab": "^14.3.4",
     "purdy": "^3.1.1"
