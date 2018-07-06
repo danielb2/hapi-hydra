@@ -40,6 +40,8 @@ internals.server = function (options) {
         }
     });
 
+    server.bind({ message: 'bind must work' });
+
     server.routev({
         method: 'GET',
         version: 'v1',
@@ -48,6 +50,15 @@ internals.server = function (options) {
         handler: function (request, reply) {
 
             return reply('root 1');
+        }
+    });
+
+    server.routev({
+        method: 'GET',
+        path: '/bindtest',
+        handler: function (request, reply) {
+
+            return reply(this.message);
         }
     });
 
@@ -222,6 +233,16 @@ describe('default options', () => {
     });
 
     describe('uri only', () => {
+
+        it('should work with bind', (done) => {
+
+            server.inject('/v1/bindtest', (res) => {
+
+                expect(res.result).to.equal('bind must work');
+                expect(res.headers.version).to.equal('v1');
+                done();
+            });
+        });
 
         it('should get v1', (done) => {
 
