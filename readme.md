@@ -1,4 +1,4 @@
-# hapi-version
+# hapi-hydra-version
 
 * [Server decorations](#server-decorations)
     * [`server.routev([options])`](#serverroutevoptions)
