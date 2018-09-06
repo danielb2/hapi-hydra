@@ -177,6 +177,25 @@ describe('default options', () => {
             });
         });
 
+        it('should fail to set the same default route', (done) => {
+
+            const fail = function () {
+                server.routev({
+                    method: 'GET',
+                    version: 'v2',
+                    isDefault: true,
+                    path: '/we/use/{params}/here',
+                    handler: function (request, reply) {
+
+                        return reply('version 2');
+                    }
+                });
+            };
+
+            expect(fail).to.throw();
+            done();
+        });
+
         it('should work with params when calling using header', (done) => {
 
             const headers = { 'api-version': 'v1' };
