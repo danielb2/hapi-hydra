@@ -84,6 +84,28 @@ internals.server = function (options) {
 
     server.routev({
         method: 'GET',
+        version: 'v1',
+        isDefault: false,
+        path: '/we/use/{params}/here',
+        handler: function (request, reply) {
+
+            return reply('version 1');
+        }
+    });
+
+    server.routev({
+        method: 'GET',
+        version: 'v2',
+        isDefault: true,
+        path: '/we/use/{params}/here',
+        handler: function (request, reply) {
+
+            return reply('version 2');
+        }
+    });
+
+    server.routev({
+        method: 'GET',
         version: 'v2',
         isDefault: true,
         path: '/test',
@@ -142,6 +164,31 @@ describe('default options', () => {
 
     const server  = internals.server();
 
+    describe('with params', () => {
+
+        it('should work with params for default route', (done) => {
+
+            server.inject({ url: '/we/use/123/here' }, (res) => {
+
+                expect(res.statusCode).to.equal(200);
+                expect(res.result).to.equal('version 2');
+                expect(res.headers.version).to.equal('v2');
+                done();
+            });
+        });
+
+        it('should work with params when calling using header', (done) => {
+
+            const headers = { 'api-version': 'v1' };
+            server.inject({ url: '/we/use/123/here', headers }, (res) => {
+
+                expect(res.statusCode).to.equal(200);
+                expect(res.result).to.equal('version 1');
+                expect(res.headers.version).to.equal('v1');
+                done();
+            });
+        });
+    });
 
     describe('multiple routes', () => {
 
