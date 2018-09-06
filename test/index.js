@@ -13,7 +13,7 @@ const internals = {};
 // Test shortcuts
 
 const lab = exports.lab = Lab.script();
-const { describe, it } = lab;
+const { describe, it, before } = lab;
 const expect = Code.expect;
 
 internals.server = function (options) {
@@ -56,29 +56,11 @@ internals.server = function (options) {
 
     server.routev({
         method: 'GET',
-        path: '/bindtest',
-        handler: function (request, reply) {
-
-            return reply(this.message);
-        }
-    });
-
-    server.route({
-        method: 'GET',
-        path: '/boom',
-        handler: function (request, reply) {
-
-            return reply(Boom.unauthorized('not welcome'));
-        }
-    });
-
-    server.routev({
-        method: 'GET',
         version: 'v1',
         path: '/test',
         handler: function (request, reply) {
 
-            return reply('version 1');
+            return reply('version 1' + ( request.query.hello || ''));
         }
     });
 
@@ -122,28 +104,138 @@ internals.server = function (options) {
         }
     });
 
-    const handler = function (request, reply) {
-
-        return reply('generic')
-    };
-
-    server.routev([
-        { method: 'GET', path: '/generic', handler: handler },
-        { version: 'v2', method: 'GET', path: '/generic', handler: handler }
-    ]);
-
     // var p = require('purdy');
     // p(server.plugins.blipp.info(), { depth: 99 });
+
+    // process.exit();
     return server;
 };
 
 
 describe('default options', () => {
 
-    const server  = internals.server();
+    let server  = internals.server();
 
+    describe('with params', () => {
+
+        before((done) => {
+
+            server  = internals.server();
+            server.routev({
+                method: 'GET',
+                version: 'v1',
+                isDefault: false,
+                path: '/we/use/{params}/here',
+                handler: function (request, reply) {
+
+                    return reply('version 1');
+                }
+            });
+            server.routev({
+                method: 'GET',
+                version: 'v2',
+                isDefault: true,
+                path: '/we/use/{params}/here',
+                handler: function (request, reply) {
+
+                    return reply('version 2');
+                }
+            });
+            server.routev({
+                method: 'GET',
+                version: 'v2',
+                isDefault: false,
+                path: '/we/use/{params}/here/{too}',
+                handler: function (request, reply) {
+
+                    return reply('version 2');
+                }
+            });
+            server.routev({
+                method: 'GET',
+                version: 'v1',
+                isDefault: true,
+                path: '/we/use/{params}/here/{too}',
+                handler: function (request, reply) {
+
+                    return reply('version 1');
+                }
+            });
+
+            done();
+        });
+
+        it('should work with multiple params for default route', (done) => {
+
+            server.inject({ url: '/we/use/123/here/too' }, (res) => {
+
+                expect(res.statusCode).to.equal(200);
+                expect(res.result).to.equal('version 1');
+                expect(res.headers.version).to.equal('v1');
+                done();
+            });
+        });
+
+        it('should work with params for default route', (done) => {
+
+            server.inject({ url: '/we/use/123/here' }, (res) => {
+
+                expect(res.statusCode).to.equal(200);
+                expect(res.result).to.equal('version 2');
+                expect(res.headers.version).to.equal('v2');
+                done();
+            });
+        });
+
+        it('should fail to set the same default route', (done) => {
+
+            const fail = function () {
+                server.routev({
+                    method: 'GET',
+                    version: 'v2',
+                    isDefault: true,
+                    path: '/we/use/{params}/here',
+                    handler: function (request, reply) {
+
+                        return reply('version 2');
+                    }
+                });
+            };
+
+            expect(fail).to.throw();
+            done();
+        });
+
+        it('should work with params when calling using header', (done) => {
+
+            const headers = { 'api-version': 'v1' };
+            server.inject({ url: '/we/use/123/here', headers }, (res) => {
+
+                expect(res.statusCode).to.equal(200);
+                expect(res.result).to.equal('version 1');
+                expect(res.headers.version).to.equal('v1');
+                done();
+            });
+        });
+    });
 
     describe('multiple routes', () => {
+
+        before((done) => {
+
+            server  = internals.server();
+            const handler = function (request, reply) {
+
+                return reply('generic')
+            };
+
+            server.routev([
+                { method: 'GET', path: '/generic', handler: handler },
+                { version: 'v2', method: 'GET', path: '/generic', handler: handler }
+            ]);
+
+            done();
+        });
 
         it('should create multiple routes with array', (done) => {
 
@@ -243,6 +335,21 @@ describe('default options', () => {
     });
 
     describe('uri only', () => {
+
+        before((done) => {
+
+            server  = internals.server();
+            server.routev({
+                method: 'GET',
+                path: '/bindtest',
+                handler: function (request, reply) {
+
+                    return reply(this.message);
+                }
+            });
+
+            done();
+        });
 
         it('should work with bind', (done) => {
 
@@ -355,6 +462,23 @@ describe('other options', () => {
             });
         });
 
+        it('should get v1 with custom header and query', (done) => {
+
+            const headers = { 'api-version': 'v1' };
+            server.inject({ url: '/api/test?hello=there', headers }, (resp) => {
+
+                expect(resp.statusCode).to.equal(302);
+
+                server.inject({ url: resp.headers.location, headers }, (res) => {
+
+                    expect(res.statusCode).to.equal(200);
+                    expect(res.result).to.equal('version 1there');
+                    expect(res.headers.version).to.equal('v1');
+                    done();
+                });
+            });
+        });
+
         it('should not bail with accept without version', (done) => {
 
             const headers = { 'Accept': 'vnd.walmart.foo;;blah=bar;' };
@@ -447,16 +571,26 @@ describe('other options', () => {
             });
         });
     });
+});
 
-    describe('other', () => {
+describe('other', () => {
 
-        it('should work without response headers', (done) => {
+    const server  = internals.server();
+    server.route({
+        method: 'GET',
+        path: '/boom',
+        handler: function (request, reply) {
 
-            server.inject('/boom', (res) => {
+            return reply(Boom.unauthorized('not welcome'));
+        }
+    });
 
-                expect(res.statusCode).to.equal(401);
-                done();
-            });
+    it('should work without response headers', (done) => {
+
+        server.inject('/boom', (res) => {
+
+            expect(res.statusCode).to.equal(401);
+            done();
         });
     });
 });
