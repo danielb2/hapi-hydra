@@ -1,6 +1,6 @@
 {
   "name": "hapi-hydra-version",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "versioning for happy, using all three methods: https://www.troyhunt.com/your-api-versioning-is-wrong-which-is/",
   "main": "lib/index.js",
   "scripts": {
