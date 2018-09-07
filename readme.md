@@ -1,4 +1,4 @@
-# hapi-version
+# hapi-hydra-version
 
 * [Server decorations](#server-decorations)
     * [`server.routev([options])`](#serverroutevoptions)
@@ -9,7 +9,7 @@
 
 This is a hapi plugin to manage three forms of versioning. It was inspired by
 [Your API versioning is wrong, which is why I decided to do it 3 different
-wrong ways] this plugin makes it simple to implement all three methods of API
+wrong ways]. This plugin makes it simple to implement all three methods of API
 versioning described in the article.
 
 1.  URL versioning
