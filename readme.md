@@ -1,4 +1,4 @@
-# hapi-hydra-version [![Build Status](https://travis-ci.org/danielb2/hapi-hydra-version.svg?branch=master)](https://travis-ci.org/danielb2/hapi-hydra-version)
+# hapi-hydra [![Build Status](https://travis-ci.org/danielb2/hapi-hydra.svg?branch=master)](https://travis-ci.org/danielb2/hapi-hydra)
 
 * [Server decorations](#server-decorations)
     * [`server.routev([options])`](#serverroutevoptions)
