@@ -1,10 +1,10 @@
 {
   "name": "hapi-hydra-version",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "versioning for hapi, using all three methods: https://www.troyhunt.com/your-api-versioning-is-wrong-which-is/",
   "main": "lib/index.js",
   "scripts": {
-    "test": "lab -a code -v -I WebAssembly -t 100 -m 30000 -r console -o coverage.log -r console -o stdout -r html -o coverage.html"
+    "test": "lab -a code -v -I WebAssembly,BigUint64Array,BigInt64Array,BigInt,URL,URLSearchParams -t 100 -m 30000 -r console -o coverage.log -r console -o stdout -r html -o coverage.html"
   },
   "repository": {
     "type": "git",
@@ -13,6 +13,7 @@
   "author": "daniel@bretoi.com",
   "license": "ISC",
   "dependencies": {
+    "call": "^5.0.1",
     "hapi": "^16.6.3"
   },
   "devDependencies": {
