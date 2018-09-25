@@ -19,7 +19,7 @@ const expect = Code.expect;
 internals.server = function (options) {
 
     options = Joi.attempt(options, {
-        header: Joi.string().default('api-version'),
+        header: Joi.any(),
         responseHeader: Joi.string().default('version'),
         prefix: Joi.string().default('/'),
         redirect: Joi.boolean().default(false)
@@ -92,15 +92,6 @@ internals.server = function (options) {
         handler: function (request, reply) {
 
             return reply('nodefault');
-        }
-    });
-
-    server.route({
-        method: 'GET',
-        path: '/regular',
-        handler: function (request, reply) {
-
-            return reply('regular');
         }
     });
 
@@ -262,6 +253,20 @@ describe('default options', () => {
 
     describe('using header', () => {
 
+        before((done) => {
+
+            server.route({
+                method: 'GET',
+                path: '/regular',
+                handler: function (request, reply) {
+
+                    return reply('regular');
+                }
+            });
+
+            done();
+        });
+
         it('should not change route based on header when accessing normal route', (done) => {
 
             const headers = { 'api-version': 'v1' };
@@ -419,6 +424,37 @@ describe('default options', () => {
                 expect(res.headers.version).to.equal('v2');
                 done();
             });
+        });
+    });
+});
+
+describe('multiple header options', () => {
+
+    const server  = internals.server({
+        header: ['version', 'api_version']
+    });
+
+    it('should work with version header', (done) => {
+
+        const headers = { api_version: 'v1' };
+        server.inject({ url: '/test', headers }, (res) => {
+
+            expect(res.statusCode).to.equal(200);
+            expect(res.result).to.equal('version 1');
+            expect(res.headers.version).to.equal('v1');
+            done();
+        });
+    });
+
+    it('should work with api_version header', (done) => {
+
+        const headers = { version: 'v1' };
+        server.inject({ url: '/test', headers }, (res) => {
+
+            expect(res.statusCode).to.equal(200);
+            expect(res.result).to.equal('version 1');
+            expect(res.headers.version).to.equal('v1');
+            done();
         });
     });
 });

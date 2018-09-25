@@ -38,8 +38,8 @@ additions:
 
 The following plugin options are available:
 
-- `header` - the custom header to look at in order to choose which endpoint to
-  invoke.
+- `header` (string/array) - the custom header(s) to look at in order to choose which endpoint to
+  invoke. Returns version for first match.
 - `responseHeader` - response header to indicate which version of the route
   was invoked. [default: 'version']
 - `prefix` - prefix for the route [default: '/']
