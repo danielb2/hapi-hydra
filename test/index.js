@@ -1,10 +1,10 @@
 'use strict';
 const Blipp = require('blipp');
-const Boom = require('boom');
-const Code = require('code');
-const Hapi = require('hapi');
+const Boom = require('@hapi/boom');
+const Code = require('@hapi/code');
+const Hapi = require('@hapi/hapi');
 const Joi = require('joi');
-const Lab = require('lab');
+const Lab = require('@hapi/lab');
 
 const HapiVersion = require('../lib');
 
@@ -16,25 +16,23 @@ const lab = exports.lab = Lab.script();
 const { describe, it, before } = lab;
 const expect = Code.expect;
 
-internals.server = function (options) {
+internals.server = async function (options) {
 
-    options = Joi.attempt(options, {
+    options = Joi.attempt(options, Joi.object({
         header: Joi.any(),
         responseHeader: Joi.string().default('version'),
         prefix: Joi.string().default('/'),
         redirect: Joi.boolean().default(false)
-    });
+    }));
 
     const server = new Hapi.Server();
 
-    server.connection();
-
-    server.register([{
-        register: HapiVersion,
+    await server.register([{
+        plugin: HapiVersion,
         options
     }, {
-        register: Blipp
-    }], (err) => {
+        plugin: Blipp
+    }]).catch(err => {
 
         if (err) {
             console.log(err);
@@ -48,9 +46,9 @@ internals.server = function (options) {
         version: 'v1',
         isDefault: true,
         path: '/',
-        handler: function (request, reply) {
+        handler: function (request, h) {
 
-            return reply('root 1');
+            return 'root 1';
         }
     });
 
@@ -58,9 +56,9 @@ internals.server = function (options) {
         method: 'GET',
         version: 'v1',
         path: '/test',
-        handler: function (request, reply) {
+        handler: function (request, h) {
 
-            return reply('version 1' + ( request.query.hello || ''));
+            return ('version 1' + ( request.query.hello || ''));
         }
     });
 
@@ -69,9 +67,9 @@ internals.server = function (options) {
         version: 'v2',
         isDefault: true,
         path: '/test',
-        handler: function (request, reply) {
+        handler: function (request, h) {
 
-            return reply('version 2');
+            return 'version 2';
         }
     });
 
@@ -79,9 +77,9 @@ internals.server = function (options) {
         method: 'GET',
         version: 'v3',
         path: '/test',
-        handler: function (request, reply) {
+        handler: function (request, h) {
 
-            return reply('version 3');
+            return 'version 3';
         }
     });
 
@@ -89,9 +87,9 @@ internals.server = function (options) {
         config: { description: 'Just a versioned path but with no default' },
         method: 'GET',
         path: '/nodefault',
-        handler: function (request, reply) {
+        handler: function (request, h) {
 
-            return reply('nodefault');
+            return 'nodefault';
         }
     });
 
@@ -105,21 +103,21 @@ internals.server = function (options) {
 
 describe('default options', () => {
 
-    let server  = internals.server();
+    let server;
 
     describe('with params', () => {
 
-        before((done) => {
+        before(async() => {
 
-            server  = internals.server();
+            server  = await internals.server();
             server.routev({
                 method: 'GET',
                 version: 'v1',
                 isDefault: false,
                 path: '/we/use/{params}/here',
-                handler: function (request, reply) {
+                handler: function (request, h) {
 
-                    return reply('version 1');
+                    return 'version 1';
                 }
             });
             server.routev({
@@ -127,9 +125,9 @@ describe('default options', () => {
                 version: 'v2',
                 isDefault: true,
                 path: '/we/use/{params}/here',
-                handler: function (request, reply) {
+                handler: function (request, h) {
 
-                    return reply('version 2');
+                    return 'version 2';
                 }
             });
             server.routev({
@@ -137,9 +135,9 @@ describe('default options', () => {
                 version: 'v2',
                 isDefault: false,
                 path: '/we/use/{params}/here/{too}',
-                handler: function (request, reply) {
+                handler: function (request, h) {
 
-                    return reply('version 2');
+                    return 'version 2';
                 }
             });
             server.routev({
@@ -147,38 +145,33 @@ describe('default options', () => {
                 version: 'v1',
                 isDefault: true,
                 path: '/we/use/{params}/here/{too}',
-                handler: function (request, reply) {
+                handler: function (request, h) {
 
-                    return reply('version 1');
+                    return 'version 1';
                 }
             });
 
-            done();
         });
 
-        it('should work with multiple params for default route', (done) => {
+        it('should work with multiple params for default route', async() => {
 
-            server.inject({ url: '/we/use/123/here/too' }, (res) => {
+            const res = await server.inject({ url: '/we/use/123/here/too' });
 
-                expect(res.statusCode).to.equal(200);
-                expect(res.result).to.equal('version 1');
-                expect(res.headers.version).to.equal('v1');
-                done();
-            });
+            expect(res.statusCode).to.equal(200);
+            expect(res.result).to.equal('version 1');
+            expect(res.headers.version).to.equal('v1');
         });
 
-        it('should work with params for default route', (done) => {
+        it('should work with params for default route', async() => {
 
-            server.inject({ url: '/we/use/123/here' }, (res) => {
+            const res = await server.inject({ url: '/we/use/123/here' });
 
-                expect(res.statusCode).to.equal(200);
-                expect(res.result).to.equal('version 2');
-                expect(res.headers.version).to.equal('v2');
-                done();
-            });
+            expect(res.statusCode).to.equal(200);
+            expect(res.result).to.equal('version 2');
+            expect(res.headers.version).to.equal('v2');
         });
 
-        it('should fail to set the same default route', (done) => {
+        it('should fail to set the same default route', async() => {
 
             const fail = function () {
                 server.routev({
@@ -186,447 +179,394 @@ describe('default options', () => {
                     version: 'v2',
                     isDefault: true,
                     path: '/we/use/{params}/here',
-                    handler: function (request, reply) {
+                    handler: function (request, h) {
 
-                        return reply('version 2');
+                        return 'version 2';
                     }
                 });
             };
 
             expect(fail).to.throw();
-            done();
         });
 
-        it('should work with params when calling using header', (done) => {
+        it('should work with params when calling using header', async() => {
 
             const headers = { 'api-version': 'v1' };
-            server.inject({ url: '/we/use/123/here', headers }, (res) => {
+            const res = await server.inject({ url: '/we/use/123/here', headers });
 
-                expect(res.statusCode).to.equal(200);
-                expect(res.result).to.equal('version 1');
-                expect(res.headers.version).to.equal('v1');
-                done();
-            });
+            expect(res.statusCode).to.equal(200);
+            expect(res.result).to.equal('version 1');
+            expect(res.headers.version).to.equal('v1');
         });
     });
 
     describe('multiple routes', () => {
 
-        before((done) => {
+        before(async() => {
 
-            server  = internals.server();
-            const handler = function (request, reply) {
+            server  = await internals.server();
+            const handler = function (request, h) {
 
-                return reply('generic')
+                return 'generic';
             };
 
             server.routev([
                 { method: 'GET', path: '/generic', handler: handler },
                 { version: 'v2', method: 'GET', path: '/generic', handler: handler }
             ]);
-
-            done();
         });
 
-        it('should create multiple routes with array', (done) => {
+        it('should create multiple routes with array', async() => {
 
-            server.inject({ url: '/v1/generic' }, (res) => {
+            const res = await server.inject({ url: '/v1/generic' });
 
-                expect(res.statusCode).to.equal(200);
-                expect(res.result).to.equal('generic');
-                expect(res.headers.version).to.equal('v1');
-                done();
-            });
+            expect(res.statusCode).to.equal(200);
+            expect(res.result).to.equal('generic');
+            expect(res.headers.version).to.equal('v1');
         });
 
-        it('should create multiple routes with array v2', (done) => {
+        it('should create multiple routes with array v2', async() => {
 
-            server.inject({ url: '/v2/generic' }, (res) => {
+            const res = await server.inject({ url: '/v2/generic' });
 
-                expect(res.statusCode).to.equal(200);
-                expect(res.result).to.equal('generic');
-                expect(res.headers.version).to.equal('v2');
-                done();
-            });
+            expect(res.statusCode).to.equal(200);
+            expect(res.result).to.equal('generic');
+            expect(res.headers.version).to.equal('v2');
         });
     });
 
     describe('using header', () => {
 
-        before((done) => {
+        before(async() => {
 
             server.route({
                 method: 'GET',
                 path: '/regular',
-                handler: function (request, reply) {
+                handler: function (request, h) {
 
-                    return reply('regular');
+                    return 'regular';
                 }
             });
-
-            done();
         });
 
-        it('should not change route based on header when accessing normal route', (done) => {
+        it('should not change route based on header when accessing normal route', async() => {
 
             const headers = { 'api-version': 'v1' };
-            server.inject({ url: '/regular', headers }, (res) => {
+            const res = await server.inject({ url: '/regular', headers });
 
-                expect(res.statusCode).to.equal(200);
-                expect(res.result).to.equal('regular');
-                expect(res.headers.version).to.not.exist();
-                done();
-            });
+            expect(res.statusCode).to.equal(200);
+            expect(res.result).to.equal('regular');
+            expect(res.headers.version).to.not.exist();
         });
 
-        it('should not change route based on header when accessing route with no default', (done) => {
+        it('should not change route based on header when accessing route with no default', async() => {
 
             const headers = { 'api-version': 'v1' };
-            server.inject({ url: '/v1/nodefault', headers }, (res) => {
+            const res = await server.inject({ url: '/v1/nodefault', headers });
 
-                expect(res.statusCode).to.equal(200);
-                expect(res.result).to.equal('nodefault');
-                expect(res.headers.version).to.equal('v1');
-                done();
-            });
+            expect(res.statusCode).to.equal(200);
+            expect(res.result).to.equal('nodefault');
+            expect(res.headers.version).to.equal('v1');
         });
 
-        it('should not set header for regular route', (done) => {
+        it('should not set header for regular route', async() => {
 
-            server.inject({ url: '/regular' }, (res) => {
+            const res = await server.inject({ url: '/regular' });
 
-                expect(res.statusCode).to.equal(200);
-                expect(res.result).to.equal('regular');
-                expect(res.headers.version).to.not.exist();
-                done();
-            });
+            expect(res.statusCode).to.equal(200);
+            expect(res.result).to.equal('regular');
+            expect(res.headers.version).to.not.exist();
         });
 
-        it('should get v1 with custom header', (done) => {
+        it('should get v1 with custom header', async() => {
 
             const headers = { 'api-version': 'v1' };
-            server.inject({ url: '/test', headers }, (res) => {
+            const res = await server.inject({ url: '/test', headers });
 
-                expect(res.statusCode).to.equal(200);
-                expect(res.result).to.equal('version 1');
-                expect(res.headers.version).to.equal('v1');
-                done();
-            });
+            expect(res.statusCode).to.equal(200);
+            expect(res.result).to.equal('version 1');
+            expect(res.headers.version).to.equal('v1');
         });
 
-        it('should get v1 with accept header', (done) => {
+        it('should get v1 with accept header', async() => {
 
             const headers = { 'Accept': 'vnd.walmart.foo;version=v1;blah=bar;' };
-            server.inject({ url: '/test', headers }, (res) => {
+            const res = await server.inject({ url: '/test', headers });
 
-                expect(res.statusCode).to.equal(200);
-                expect(res.result).to.equal('version 1');
-                expect(res.headers.version).to.equal('v1');
-                done();
-            });
+            expect(res.statusCode).to.equal(200);
+            expect(res.result).to.equal('version 1');
+            expect(res.headers.version).to.equal('v1');
         });
 
-        it('should trump with custom header vs accept header', (done) => {
+        it('should trump with custom header vs accept header', async() => {
 
             const headers = { 'Accept': 'vnd.walmart.foo;version=v1;blah=bar;', 'api-version': 'v3' };
-            server.inject({ url: '/test', headers }, (res) => {
+            const res = await server.inject({ url: '/test', headers });
 
-                expect(res.statusCode).to.equal(200);
-                expect(res.result).to.equal('version 3');
-                expect(res.headers.version).to.equal('v3');
-                done();
-            });
+            expect(res.statusCode).to.equal(200);
+            expect(res.result).to.equal('version 3');
+            expect(res.headers.version).to.equal('v3');
         });
     });
 
     describe('uri only', () => {
 
-        before((done) => {
+        before(async() => {
 
-            server  = internals.server();
+            server  = await internals.server();
             server.routev({
                 method: 'GET',
                 path: '/bindtest',
-                handler: function (request, reply) {
+                handler: function (request, h) {
 
-                    return reply(this.message);
+                    return this.message;
                 }
             });
-
-            done();
         });
 
-        it('should work with bind', (done) => {
+        it('should work with bind', async() => {
 
-            server.inject('/v1/bindtest', (res) => {
+            const res = await server.inject('/v1/bindtest');
 
-                expect(res.result).to.equal('bind must work');
-                expect(res.headers.version).to.equal('v1');
-                done();
-            });
+            expect(res.result).to.equal('bind must work');
+            expect(res.headers.version).to.equal('v1');
         });
 
-        it('should get v1', (done) => {
+        it('should get v1', async() => {
 
-            server.inject('/v1/test', (res) => {
+            const res = await server.inject('/v1/test');
 
-                expect(res.result).to.equal('version 1');
-                expect(res.headers.version).to.equal('v1');
-                done();
-            });
+            expect(res.result).to.equal('version 1');
+            expect(res.headers.version).to.equal('v1');
         });
 
-        it('should get v2', (done) => {
+        it('should get v2', async() => {
 
-            server.inject('/v2/test', (res) => {
+            const res = await server.inject('/v2/test');
 
-                expect(res.result).to.equal('version 2');
-                expect(res.headers.version).to.equal('v2');
-                done();
-            });
+            expect(res.result).to.equal('version 2');
+            expect(res.headers.version).to.equal('v2');
         });
 
-        it('should get v3', (done) => {
+        it('should get v3', async() => {
 
-            server.inject('/v3/test', (res) => {
+            const res = await server.inject('/v3/test');
 
-                expect(res.result).to.equal('version 3');
-                expect(res.headers.version).to.equal('v3');
-                done();
-            });
+            expect(res.result).to.equal('version 3');
+            expect(res.headers.version).to.equal('v3');
         });
 
-        it('should get root default', (done) => {
+        it('should get root default', async() => {
 
-            server.inject('/', (res) => {
+            const res = await server.inject('/');
 
-                expect(res.result).to.equal('root 1');
-                expect(res.headers.version).to.equal('v1');
-                done();
-            });
+            expect(res.result).to.equal('root 1');
+            expect(res.headers.version).to.equal('v1');
         });
 
-        it('should get root', (done) => {
+        it('should get root', async() => {
 
-            server.inject('/v1', (res) => {
+            const res = await server.inject('/v1');
 
-                expect(res.result).to.equal('root 1');
-                expect(res.headers.version).to.equal('v1');
-                done();
-            });
+            expect(res.result).to.equal('root 1');
+            expect(res.headers.version).to.equal('v1');
         });
 
-        it('should get default', (done) => {
+        it('should get default', async() => {
 
-            server.inject('/test', (res) => {
+            const res = await server.inject('/test');
 
-                expect(res.result).to.equal('version 2');
-                expect(res.headers.version).to.equal('v2');
-                done();
-            });
+            expect(res.result).to.equal('version 2');
+            expect(res.headers.version).to.equal('v2');
         });
     });
 });
 
 describe('multiple header options', () => {
 
-    const server  = internals.server({
-        header: ['version', 'api_version']
+    let server;
+    
+    before(async() => {
+
+        server  = await internals.server({
+            header: ['version', 'api_version']
+        });
     });
 
-    it('should work with version header', (done) => {
+    it('should work with version header', async() => {
 
         const headers = { api_version: 'v1' };
-        server.inject({ url: '/test', headers }, (res) => {
+        const res = await server.inject({ url: '/test', headers });
 
-            expect(res.statusCode).to.equal(200);
-            expect(res.result).to.equal('version 1');
-            expect(res.headers.version).to.equal('v1');
-            done();
-        });
+        expect(res.statusCode).to.equal(200);
+        expect(res.result).to.equal('version 1');
+        expect(res.headers.version).to.equal('v1');
     });
 
-    it('should work with api_version header', (done) => {
+    it('should work with api_version header', async() => {
 
         const headers = { version: 'v1' };
-        server.inject({ url: '/test', headers }, (res) => {
+        const res = await server.inject({ url: '/test', headers });
 
-            expect(res.statusCode).to.equal(200);
-            expect(res.result).to.equal('version 1');
-            expect(res.headers.version).to.equal('v1');
-            done();
-        });
+        expect(res.statusCode).to.equal(200);
+        expect(res.result).to.equal('version 1');
+        expect(res.headers.version).to.equal('v1');
     });
 });
 
 
 describe('other options', () => {
 
-    const server  = internals.server({
-        redirect: true,
-        prefix: '/api'
+    let server;
+
+    before(async() => {
+
+        server  = await internals.server({
+            redirect: true,
+            prefix: '/api'
+        });
     });
 
     describe('using header', () => {
 
-        it('should not change route based on header when accessing route with no default', (done) => {
+        it('should not change route based on header when accessing route with no default', async() => {
 
             const headers = { 'api-version': 'v1' };
-            server.inject({ url: '/api/v1/nodefault', headers }, (res) => {
+            const res = await server.inject({ url: '/api/v1/nodefault', headers });
 
-                expect(res.statusCode).to.equal(200);
-                expect(res.result).to.equal('nodefault');
-                expect(res.headers.version).to.equal('v1');
-                done();
-            });
+            expect(res.statusCode).to.equal(200);
+            expect(res.result).to.equal('nodefault');
+            expect(res.headers.version).to.equal('v1');
         });
 
-        it('should get v1 with custom header', (done) => {
+        it('should get v1 with custom header', async() => {
 
             const headers = { 'api-version': 'v1' };
-            server.inject({ url: '/api/test', headers }, (resp) => {
+            const resp = await server.inject({ url: '/api/test', headers });
 
-                expect(resp.statusCode).to.equal(302);
+            expect(resp.statusCode).to.equal(302);
 
-                server.inject({ url: resp.headers.location, headers }, (res) => {
+            const res = await server.inject({ url: resp.headers.location, headers });
 
-                    expect(res.statusCode).to.equal(200);
-                    expect(res.result).to.equal('version 1');
-                    expect(res.headers.version).to.equal('v1');
-                    done();
-                });
-            });
+            expect(res.statusCode).to.equal(200);
+            expect(res.result).to.equal('version 1');
+            expect(res.headers.version).to.equal('v1');
         });
 
-        it('should get v1 with custom header and query', (done) => {
+        it('should get v1 with custom header and query', async() => {
 
             const headers = { 'api-version': 'v1' };
-            server.inject({ url: '/api/test?hello=there', headers }, (resp) => {
+            const resp = await server.inject({ url: '/api/test?hello=there', headers });
 
-                expect(resp.statusCode).to.equal(302);
+            expect(resp.statusCode).to.equal(302);
 
-                server.inject({ url: resp.headers.location, headers }, (res) => {
+            const res = await server.inject({ url: resp.headers.location, headers });
 
-                    expect(res.statusCode).to.equal(200);
-                    expect(res.result).to.equal('version 1there');
-                    expect(res.headers.version).to.equal('v1');
-                    done();
-                });
-            });
+            expect(res.statusCode).to.equal(200);
+            expect(res.result).to.equal('version 1there');
+            expect(res.headers.version).to.equal('v1');
         });
 
-        it('should not bail with accept without version', (done) => {
+        it('should not bail with accept without version', async() => {
 
             const headers = { 'Accept': 'vnd.walmart.foo;;blah=bar;' };
-            server.inject({ url: '/api/test', headers }, (res) => {
+            const res = await server.inject({ url: '/api/test', headers });
 
-                expect(res.statusCode).to.equal(200);
-                expect(res.result).to.equal('version 2');
-                expect(res.headers.version).to.equal('v2');
-                done();
-            });
+            expect(res.statusCode).to.equal(200);
+            expect(res.result).to.equal('version 2');
+            expect(res.headers.version).to.equal('v2');
+            
         });
 
-        it('should get v1 with accept header', (done) => {
+        it('should get v1 with accept header', async() => {
 
             const headers = { 'Accept': 'vnd.walmart.foo;version=v1;blah=bar;' };
-            server.inject({ url: '/api/test', headers }, (res) => {
+            const res = await server.inject({ url: '/api/test', headers });
 
-                expect(res.statusCode).to.equal(302);
+            expect(res.statusCode).to.equal(302);
 
-                server.inject({ url: res.headers.location, headers }, (resp) => {
+            const resp = await server.inject({ url: res.headers.location, headers });
 
-                    expect(resp.statusCode).to.equal(200);
-                    expect(resp.result).to.equal('version 1');
-                    expect(resp.headers.version).to.equal('v1');
-                    done();
-                });
-            });
+            expect(resp.statusCode).to.equal(200);
+            expect(resp.result).to.equal('version 1');
+            expect(resp.headers.version).to.equal('v1');
         });
     });
 
     describe('uri only', () => {
 
-        it('should get v1', (done) => {
+        it('should get v1', async() => {
 
-            server.inject('/api/v1/test', (res) => {
+            const res = await server.inject('/api/v1/test');
 
-                expect(res.result).to.equal('version 1');
-                expect(res.headers.version).to.equal('v1');
-                done();
-            });
+            expect(res.result).to.equal('version 1');
+            expect(res.headers.version).to.equal('v1');
+
         });
 
-        it('should get v2', (done) => {
+        it('should get v2', async() => {
 
-            server.inject('/api/v2/test', (res) => {
+            const res = await server.inject('/api/v2/test');
 
-                expect(res.result).to.equal('version 2');
-                expect(res.headers.version).to.equal('v2');
-                done();
-            });
+            expect(res.result).to.equal('version 2');
+            expect(res.headers.version).to.equal('v2');
         });
 
-        it('should get v3', (done) => {
+        it('should get v3', async() => {
 
-            server.inject('/api/v3/test', (res) => {
+            const res = await server.inject('/api/v3/test');
 
-                expect(res.result).to.equal('version 3');
-                expect(res.headers.version).to.equal('v3');
-                done();
-            });
+            expect(res.result).to.equal('version 3');
+            expect(res.headers.version).to.equal('v3');
         });
 
-        it('should get root default', (done) => {
+        it('should get root default', async() => {
 
-            server.inject('/api', (res) => {
+            const res = await server.inject('/api');
 
-                expect(res.result).to.equal('root 1');
-                expect(res.headers.version).to.equal('v1');
-                done();
-            });
+            expect(res.result).to.equal('root 1');
+            expect(res.headers.version).to.equal('v1');
         });
 
-        it('should get root', (done) => {
+        it('should get root', async() => {
 
-            server.inject('/api/v1', (res) => {
+            const res = await server.inject('/api/v1');
 
-                expect(res.result).to.equal('root 1');
-                expect(res.headers.version).to.equal('v1');
-                done();
-            });
+            expect(res.result).to.equal('root 1');
+            expect(res.headers.version).to.equal('v1');
         });
 
-        it('should get default', (done) => {
+        it('should get default', async() => {
 
-            server.inject('/api/test', (res) => {
+            const res = await server.inject('/api/test');
 
-                expect(res.result).to.equal('version 2');
-                expect(res.headers.version).to.equal('v2');
-                done();
-            });
+            expect(res.result).to.equal('version 2');
+            expect(res.headers.version).to.equal('v2');
         });
     });
 });
 
 describe('other', () => {
 
-    const server  = internals.server();
-    server.route({
-        method: 'GET',
-        path: '/boom',
-        handler: function (request, reply) {
+    let server;
+    
+    before(async() => {
+        server  = await internals.server();
 
-            return reply(Boom.unauthorized('not welcome'));
-        }
+        server.route({
+            method: 'GET',
+            path: '/boom',
+            handler: function (request, h) {
+    
+                throw Boom.unauthorized('not welcome');
+            }
+        });
     });
 
-    it('should work without response headers', (done) => {
+    it('should work without response headers', async() => {
 
-        server.inject('/boom', (res) => {
+        const res = await server.inject('/boom');
 
-            expect(res.statusCode).to.equal(401);
-            done();
-        });
+        expect(res.statusCode).to.equal(401);
     });
 });
